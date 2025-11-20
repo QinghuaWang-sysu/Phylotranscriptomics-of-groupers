@@ -1,0 +1,2 @@
+cat trinity data of species of all samples to total trinity
+cat Trinity_species1.fasta Trinity_species2.fasta Trinity_species3.fasta > Trinity_total_species.fasta 
