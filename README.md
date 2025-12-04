@@ -1,6 +1,8 @@
 ## 1. Data collection
 Raw data newly sequenced in this study can be download from NCBI Sequence Read Archive (SRA) with accession number PRJNA1344424.
+
 Raw data sequenced in our previous study can be download from NCBI SRA with accession number SRP483481 and PRJCA002372.
+
 Raw data collected from the previous study can be download from NCBI SRA with accession number PRJNA609274.
 
 ## 2. Transcriptome assembly
