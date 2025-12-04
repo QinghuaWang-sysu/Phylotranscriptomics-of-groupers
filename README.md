@@ -27,7 +27,7 @@ for i in Species ; do Trinity --seqType fq --max_memory 50G --left ${i}_1.paired
 ```
 
 ### 2.4. Preliminary redundancy reduction
-Preliminary redundancy reduction was implemented with CD-HIT-EST v.4.6.
+Preliminary redundancy reduction was implemented with CD-HIT-EST v.4.6, implementing a sequence identity threshold of 0.95 and applying a word length of 10.
 ```
 for i in Species; do /opt/biosoft/anaconda3_package/bin/cd-hit-est -i ${i}_total_trinity.fasta -o ${i}_cdhitest.fasta -c 0.95 -n 10 ; done
 ```
