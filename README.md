@@ -7,8 +7,17 @@ Raw data collected from the previous study can be download from NCBI SRA with ac
 
 ## 2. Transcriptome assembly
 ### 2.1. Quality control
-
-
+The raw sequencing RNA-seq reads were visualized and quality-checked using FastQC v0.11.9.
+```
+# conda install -c bioconda fastqc
+for i in Species; do fastqc ${i}_1.fq.gz ; done
+for i in Species; do fastqc ${i}_2.fq.gz ; done
+```
+### 2.2 Filtered using Trimmomatic
+Raw reads were first filtered using Trimmomatic v.0.39 with a minimum reads length (MINLEN) of 100 to obtain clean reads.
+```
+for i in Species; do trimmomatic PE -threads 20 -phred33 ./raw_data/"$i"/"$i"_1.fq.gz ./raw_data/"$i"/"$i"_2.fq.gz -baseout ./clean_data/"$i"_cleandata.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:100
+```
 
 Preliminary redundancy reduction was implemented with CD-HIT-EST v.4.6.
 ```
