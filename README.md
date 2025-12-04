@@ -81,8 +81,39 @@ for i in Species; do hmmscan --cpu 2 --tblout /transdecoder_tri_Pfam/${i}.new.ou
 for i in Species; do TransDecoder-v5.5.0/TransDecoder.Predict -t ${i}_longest.fasta --retain_pfam_hits /transdecoder_tri_Pfam/${i}.new.pfam.domtblout ; done
 ```
 
-### 2.7. 
+### 2.7. Local BLASTX searches
+```
+## mkdir transdecoder_tri_cds and transdecoder_tri_pep files
+mkdir transdecoder_tri_cds
+mkdir transdecoder_tri_pep
 
+## Cat all cds files of the same species from three databses for Total.transdecoder.cds
+for i in Species ; do cat /transdecoder_tri_Nr/${i}_longest.fasta.transdecoder.cds /transdecoder_tri_Pfam/${i}_longest.fasta.transdecoder.cds /transdecoder_tri_Swiss/${i}_longest.fasta.transdecoder.cds > /transdecoder_tri_cds/${i}_Total.transdecoder.cds ; done &
 
+## Cat all pep files of the same species from three databses for Total.transdecoder.pep
+for i in Species ; do cat /transdecoder_tri_Nr/${i}_longest.fasta.transdecoder.pep /transdecoder_tri_Pfam/${i}_longest.fasta.transdecoder.pep /transdecoder_tri_Swiss/${i}_longest.fasta.transdecoder.pep > /transdecoder_tri_pep/${i}_Total.transdecoder.pep ; done &
+
+## Download all Actinopterygii datasets (189 species)
+# Diamond makedb the 'fish_refseq' for the 'fish_refseq_db'
+diamond makedb --in fish_refseq --db fish_refseq_db
+
+# Local BLASTX searches for the refseqblastx.outfmt6
+for i in Species ; do diamond blastx -q /transdecoder_tri_cds/${i}_Total.transdecoder.cds -d fish_refseq_db --evalue 1e-5 --max-target-seqs 1 >> ${i}.refseqblastx.outfmt6 ; done &
+
+### Python process_data_${i}.py for the unique_protein
+for i in Species ; do python process_data_${i}.py ; done
+
+### Get the id.txt, seqkit grep for the refseq.cds.fa, and sed the sequence names
+for i in Species ; do cut -f 1 unique_protein_${i}.refseqblastx.outfmt6 > ${i}_id.txt ; done
+for i in Species ; do cat /transdecoder_tri_cds/${i}_Total.transdecoder.cds | seqkit grep -f ${i}_id.txt > ${i}.refseq.cds.fa ; done
+for i in Species ; do cat /transdecoder_tri_pep/${i}_Total.transdecoder.pep | seqkit grep -f ${i}_id.txt > ${i}.refseq.pep ; done
+for i in Species ; do sed -i "s/TRINITY/${i}/g" ${i}.refseq.cds.fa ; done
+for i in Species ; do sed -i "s/TRINITY/${i}/g" ${i}.refseq.pep ; done
+for i in Species ; do sed -i "s/TRINITY/${i}/g" ${i}_id.txt ; done
+
+### The final ${i}.refseq.cds.fa and ${i}.refseq.pep were used to Ortholog identification
+```
+
+### 2.8.
 
 
