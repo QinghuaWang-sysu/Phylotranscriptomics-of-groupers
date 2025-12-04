@@ -23,22 +23,28 @@ for i in Species ; do java -jar /Trimmomatic-0.39/trimmomatic-0.39.jar PE -phred
 ### 2.3. Transcriptome assembly
 Transcriptome assembly was accomplished using Trinity v.2.8.5 (Grabherr et al., 2011) with --CPU set to 20, --min_kmer_cov set to 2, and all other parameters set to default.
 ```
-for i in Species ; do Trinity --seqType fq --max_memory 50G --left ${i}_1.paired.fq.gz --right ${i}_2.paired.fq.gz --CPU 10 --min_kmer_cov 2 --min_contig_length 200 ; done
+for i in Species ; do Trinity --seqType fq --max_memory 50G --left ${i}_1.paired.fq.gz --right ${i}_2.paired.fq.gz --CPU 10 --min_kmer_cov 2 --min_contig_length 200 --output trinity_out_dir ; done
 ```
 
-### 2.4. Preliminary redundancy reduction
+### 2.4. Merge transcriptome
+All assemblies of each species were merged into one transcriptome.
+```
+for i in Species ; do cat ${i}1_trinity_out_dir/Trinity.fasta ${i}2_trinity_out_dir/Trinity.fasta ${i}3_trinity_out_dir/Trinity.fasta >> ${i}_total_trinity.fasta
+```
+
+### 2.5. Preliminary redundancy reduction
 Preliminary redundancy reduction was implemented with CD-HIT-EST v.4.6, implementing a sequence identity threshold of 0.95 and applying a word length of 10.
 ```
 for i in Species; do /opt/biosoft/anaconda3_package/bin/cd-hit-est -i ${i}_total_trinity.fasta -o ${i}_cdhitest.fasta -c 0.95 -n 10 ; done
 ```
 
-### 2.5. Obtaining the longest transcripts
+### 2.6. Obtaining the longest transcripts
 The longest transcripts were selected using the “get_longest_isoform_seq_per_trinity_gene.pl” implemented in Trinity.
 ```
 for i in Species; do /opt/biosoft/anaconda3_package/bin/misc/get_longest_isoform_seq_per_trinity_gene.pl ${i}_cdhitest.fasta > ${i}_longest.fasta ; done
 ```
 
-### 2.6. ORFs and CDS predict
+### 2.7. ORFs and CDS predict
 Longest isoforms were used to predict open reading frames (ORFs) and coding sequences (CDS) using TransDecoder v.5.5.0 against the NCBI Non-Redundant Protein Sequence (Nr), UniProt Knowledge Base (UniProtKB/Swiss-Prot), and Protein Family (Pfam) databases with an E-value threshold of 1e-5.
 ```
 ### Longest isoforms were used to predict open reading frames (ORFs) and coding sequences (CDS) using TransDecoder v.5.5.0
@@ -81,7 +87,7 @@ for i in Species; do hmmscan --cpu 2 --tblout /transdecoder_tri_Pfam/${i}.new.ou
 for i in Species; do TransDecoder-v5.5.0/TransDecoder.Predict -t ${i}_longest.fasta --retain_pfam_hits /transdecoder_tri_Pfam/${i}.new.pfam.domtblout ; done
 ```
 
-### 2.7. Local BLASTX searches
+### 2.8. Local BLASTX searches
 ```
 ## mkdir transdecoder_tri_cds and transdecoder_tri_pep files
 mkdir transdecoder_tri_cds
@@ -114,6 +120,6 @@ for i in Species ; do sed -i "s/TRINITY/${i}/g" ${i}_id.txt ; done
 ### The final ${i}.refseq.cds.fa and ${i}.refseq.pep were used to Ortholog identification
 ```
 
-### 2.8.
+### 2.9.
 
 
