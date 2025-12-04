@@ -1,3 +1,5 @@
+# Phylotranscriptomics of Groupers
+
 ## 1. Data collection
 Raw data newly sequenced in this study can be download from NCBI Sequence Read Archive (SRA) with accession number PRJNA1344424.
 
