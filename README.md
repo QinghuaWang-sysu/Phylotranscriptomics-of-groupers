@@ -90,6 +90,7 @@ for i in Species; do TransDecoder-v5.5.0/TransDecoder.Predict -t ${i}_longest.fa
 ```
 
 ### 2.8. Local BLASTX searches
+Local BLASTX searches were conducted for the predicted CDS to further reduce redundancy using DIAMOND against the NCBI RefSeq of all Actinopterygii datasets (189 species).
 ```
 ## mkdir transdecoder_tri_cds and transdecoder_tri_pep files
 mkdir transdecoder_tri_cds
@@ -122,6 +123,59 @@ for i in Species ; do sed -i "s/TRINITY/${i}/g" ${i}_id.txt ; done
 ### The final ${i}.refseq.cds.fa and ${i}.refseq.pep were used to Ortholog identification
 ```
 
-### 2.9.
+### 2.9. BUSCO completeness assessment
+Transcriptome completeness was assessed using BUSCO v.5.5.0 according to the actinopterygii_odb10 database (highly conserved fish orthologs, https://busco.ezlab.org).
+```
+### The final ${i}.refseq.cds.fa and ${i}.refseq.pep were used to BUSCO assessment
+## Download actinopterygii_odb10 from https://busco.ezlab.org
+# Obtaing Docker for BUSCO assessment
+for i in Species ; do docker run -v $...path:/work -w /work ezlabgva/busco:v5.5.0_cv1 busco -f -i ${i}.refseq.cds.fa -o ${i}_refseq_busco -l actinopterygii_odb10 -m transcriptome -c 8 ; done
+```
+
+## 3. Ortholog identification and sequence alignment
+### 3.1. Ortholog identification
+Orthogroups were identified using OrthoFinder v.2.5.5, applying an all-against-all BLAST algorithm to implement reciprocal best-hit BLASTs, using DIAMOND as the sequence similarity search engine, with the normalization of transcript length.
+```
+## mkdir Orthofinder_33_Speceis
+mkdir Orthofinder_33_Speceis
+# Download RefSeq of outgroup Centropristis striata (NCBI accession number: GCF_030273125)
+# cp Centropristis_striata_GCF_030273125.1_protein.faa to Orthofinder_33_Speceis file
+# Ortholog identification, total 33 species, including 32 groupers and 1 outgroup (C. striata)
+orthofinder -f /Orthofinder_33_Speceis/ -S diamond 
+
+### Finally, '/Orthofinder_33_Speceis/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences' file obtain 108 OGs
+```
+
+### 3.2. Sequence alignment
+Through ortholog identification, a total of 108 one-to-one single-copy orthologous genes (OGs) were identified and used for downstream analysis. All OGs were aligned using MAFFT v.7.453 with the L-INS-I algorithm. Subsequently, aligned OGs were trimmed using trimAl v.1.4 with the --automated1 parameter.
+```
+## mkdir Sequence_alignment, 01_108OGs_AA, 02mafft, 03trimal, and 04_AA_final
+mkdir Sequence_alignment
+mkdir Sequence_alignment/01_108OGs_AA
+mkdir Sequence_alignment/02mafft
+mkdir Sequence_alignment/03trimal
+mkdir Sequence_alignment/04_AA_final
+
+# cp 108 OGs to Sequence_alignment/01_108OGs_AA file
+cp /Orthofinder_33_Speceis/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences/*.fa /Sequence_alignment/01_108OGs_AA
+
+## MAFFT alignment
+cd /Sequence_alignment/01_108OGs_AA
+export TMPDIR=/Sequence_alignment/01_108OGs_AA
+for i in *.fa; do mafft --localpair --maxiterate 1000 $i > /Sequence_alignment/02mafft/$i ; done &
+# rename the *.fa
+rename 's/$/\.mafft/'  /Sequence_alignment/02mafft/*
+# only retain the sequences of *.fa using AA_retain_sequence.py
+python AA_retain_sequence.py
+
+## trimAl trimmed
+cd /Sequence_alignment/02mafft
+for i in *.mafft ; do trimal -in $i -out /Sequence_alignment/03trimal/${i}.trimal -htmlout output.html -automated1 ; done
+cd /Sequence_alignment/03trimal
+for i in *.trimal ; do cat $i | seqkit replace -p "\s.+" >> $i.cat ; done
+for i in *.cat ; do sed 's/^\(>.*\)/\1\t/' $i | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > $i.sed ; done
+
+#### only retain the species name for each OGs
+```
 
 
