@@ -184,7 +184,7 @@ for i in *.cat ; do sed 's/^\(>.*\)/\1\t/' $i | tr '\n' ' ' | sed -e 's/ $/\n/' 
 Phylogenetic trees of family Epinephelidae were reconstructed using two different dataset types (nucleotide and amino acid), five distinct phylogenetic inference methods (ML, BI, MSC, NJ, and ME), and two gene integration strategies (concatenation and coalescence). 
 
 ### 4.1. Phylogenetic analyses using two different dataset types
-#### 4.1.1 Obtaining the corresponding nucleotide CDS
+#### 4.1.1. Obtaining the corresponding nucleotide CDS
 The corresponding nucleotide CDS were obtained and aligned using PAL2NAL v.14.0 against the amino acids of orthologs.
 ```
 ## For 32 Epinephelidae species
@@ -228,7 +228,7 @@ echo "split cds done"
 ```
 The CDS were obtained, and Sequence alignment was performed following the description in Section 3.2.
 
-#### 4.1.2 The average pairwise distance between species
+#### 4.1.2. The average pairwise distance between species
 The average pairwise distance between species was calculated to further quantify the relationship within major clades for both nucleotide and amino acid datasets.
 ```
 #### Rscript p-distance.R
@@ -383,13 +383,17 @@ plot_heatmap("Protein_pdistance_matrix.csv",
 
 ```
 
-
-
 ### 4.2. Phylogenetic analyses using five distinct inference methods
+#### 4.2.1. Maximum likelihood (ML) tree
+ML phylogenetic inference was performed using IQ-TREE v.2.1.2 with 10,000 bootstrap replicates under the best-fit model determined by ModelFinder, which applied the ModelFinder Plus (MFP) option for -m parameter. Node support was evaluated by the SH-like approximate likelihood ratio test (SH-aLRT) with 10,000 replicates.
+```
+iqtree2 -s Grouper108OGs.fas -m MFP -nt 40 -bb 10000 -bnni -alrt 10000 -redo
+```
+#### 4.2.2. Bayesian inference (BI) tree
+BI tree was inferred by MrBayes v.3.2.7 with the parameter set as follows: Four Markov Chain Monte Carlo (MCMC) chains (including three heated and one cold chains) were run independently for 10 million generations and sampled every 1,000 generations.
+```
 
-
-
-
+```
 
 
 
