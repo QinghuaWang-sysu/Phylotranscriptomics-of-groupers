@@ -184,7 +184,8 @@ for i in *.cat ; do sed 's/^\(>.*\)/\1\t/' $i | tr '\n' ' ' | sed -e 's/ $/\n/' 
 Phylogenetic trees of family Epinephelidae were reconstructed using two different dataset types (nucleotide and amino acid), five distinct phylogenetic inference methods (ML, BI, MSC, NJ, and ME), and two gene integration strategies (concatenation and coalescence). 
 
 ### 4.1. Phylogenetic analyses using two different dataset types
-#### 4.1.1 The corresponding nucleotide CDS were obtained and aligned using PAL2NAL v.14.0 against the amino acids of orthologs.
+#### 4.1.1 Obtaining the corresponding nucleotide CDS
+The corresponding nucleotide CDS were obtained and aligned using PAL2NAL v.14.0 against the amino acids of orthologs.
 ```
 ## For 32 Epinephelidae species
 # mkdir Single_Copy_Orthologue_Sequences
@@ -225,7 +226,164 @@ cat output_cda.tab|while read id;do
 done
 echo "split cds done"
 ```
-The cds were obtained, and Sequence alignment was performed following the description in Section 3.2.
+The CDS were obtained, and Sequence alignment was performed following the description in Section 3.2.
+
+#### 4.1.2 The average pairwise distance between species
+The average pairwise distance between species was calculated to further quantify the relationship within major clades for both nucleotide and amino acid datasets.
+```
+#### Rscript p-distance.R
+
+#!/usr/bin/env Rscript
+
+library(ape)
+
+### 0. Read species order
+species_order <- scan("id.txt", what = "character")
+
+### 1. Read nucleotide sequences
+nuc <- read.dna("Nuc108.fa", format = "fasta", as.character = FALSE)
+
+### Reorder nucleotide sequences
+nuc <- nuc[species_order, ]
+
+### 2. Nucleotide p-distance
+dist_nuc <- dist.dna(nuc, model = "raw", pairwise.deletion = TRUE)
+
+### Convert dist to full matrix and reorder according to species order
+dist_nuc_mat <- as.matrix(dist_nuc)
+dist_nuc_mat <- dist_nuc_mat[species_order, species_order]
+
+### 3. Read protein sequences
+prot <- read.FASTA("Prot108.fa")
+
+### Reorder protein sequences
+prot <- prot[species_order]
+
+### Convert protein sequences to equal-length matrix
+prot_list <- lapply(prot, function(x) unlist(strsplit(as.character(x), "")))
+max_len <- max(sapply(prot_list, length))
+
+prot_mat <- do.call(rbind, lapply(prot_list, function(x) {
+  length(x) <- max_len
+  x[is.na(x)] <- "-"
+  return(x)
+}))
+
+rownames(prot_mat) <- species_order
+
+### 4. Compute protein p-distance manually
+n <- nrow(prot_mat)
+dist_prot <- matrix(0, n, n)
+rownames(dist_prot) <- colnames(dist_prot) <- species_order
+
+for (i in 1:(n-1)) {
+  for (j in (i+1):n) {
+    s1 <- prot_mat[i, ]
+    s2 <- prot_mat[j, ]
+    valid <- (s1 != "-" & s2 != "-")
+    if (sum(valid) > 0) {
+      d <- sum(s1[valid] != s2[valid]) / sum(valid)
+    } else {
+      d <- NA
+    }
+    dist_prot[i, j] <- dist_prot[j, i] <- d
+  }
+}
+
+### Get upper triangle values for summary
+prot_values <- dist_prot[upper.tri(dist_prot)]
+
+### 5. Output results
+cat("Mean nucleotide p-distance:", mean(dist_nuc_mat), "\n")
+cat("Mean protein p-distance:", mean(prot_values, na.rm = TRUE), "\n\n")
+
+cat("Nucleotide summary:\n")
+print(summary(as.vector(dist_nuc_mat)))
+
+cat("\nProtein summary:\n")
+print(summary(prot_values))
+
+### 6. Save matrices in species_order
+write.csv(dist_nuc_mat, "Nucleotide_pdistance_matrix.csv")
+write.csv(dist_prot, "Protein_pdistance_matrix.csv")
+```
+```
+#### Rscript plot_heatmap.R
+
+#!/usr/bin/env Rscript
+
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+plot_heatmap <- function(input_file, output_file_base, title_text, id_file) {
+
+    # Read species order
+    species_order <- read.table(id_file, stringsAsFactors = FALSE)[,1]
+
+    # Read matrix
+    df <- read.csv(input_file, row.names = 1, check.names = FALSE)
+
+    # Keep 3 decimal places as character (retain trailing zeros)
+    df <- as.data.frame(lapply(df, function(x) sprintf("%.3f", x)), row.names = rownames(df))
+
+    # Sort rows and columns based on id.txt
+    df <- df[species_order, species_order]
+
+    # Convert to long format
+    df_long <- df %>%
+        mutate(Var1 = rownames(df)) %>%
+        pivot_longer(
+            cols = -Var1,
+            names_to = "Var2",
+            values_to = "Distance"
+        )
+
+    # Set Var1 and Var2 as factors to fix plotting order
+    df_long$Var1 <- factor(df_long$Var1, levels = species_order)
+    df_long$Var2 <- factor(df_long$Var2, levels = species_order)
+
+    # Plot (single blue gradient + display values with trailing zeros)
+    p <- ggplot(df_long, aes(x = Var1, y = Var2, fill = as.numeric(Distance))) +
+        geom_tile(color = "white") +
+        geom_text(aes(label = Distance), size = 2) +  # show value as string
+        scale_fill_gradient(
+            low = "#c6dbef",   # light blue
+            high = "#08306b",  # dark blue
+            name = "p-distance"
+        ) +
+        theme_minimal() +
+        theme(
+            axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+            axis.text.y = element_text(size = 8),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            plot.title = element_text(size = 14, hjust = 0.5)
+        ) +
+        ggtitle(title_text)
+
+    # Save PNG
+    ggsave(paste0(output_file_base, ".png"), p, width = 10, height = 8, dpi = 300)
+
+    # Save SVG
+    ggsave(paste0(output_file_base, ".svg"), p, width = 10, height = 8)
+}
+
+# Nucleotide distance heatmap
+plot_heatmap("Nucleotide_pdistance_matrix.csv",
+             "Nucleotide_pdistance_heatmap_values_round3_fixed",
+             "Nucleotide p-distance Heatmap",
+             "id.txt")
+
+# Protein distance heatmap
+plot_heatmap("Protein_pdistance_matrix.csv",
+             "Protein_pdistance_heatmap_values_round3_fixed",
+             "Protein p-distance Heatmap",
+             "id.txt")
+
+```
+
+
 
 ### 4.2. Phylogenetic analyses using five distinct inference methods
 
