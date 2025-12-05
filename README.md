@@ -148,7 +148,8 @@ orthofinder -f /Orthofinder_33_Speceis/ -S diamond
 
 ### 3.2. Sequence alignment
 Through ortholog identification, a total of 108 one-to-one single-copy orthologous genes (OGs) were identified and used for downstream analysis. All OGs were aligned using MAFFT v.7.453 with the L-INS-I algorithm. Subsequently, aligned OGs were trimmed using trimAl v.1.4 with the --automated1 parameter.
-The phylogenetic framework of Epinephelidae was resolved using transcriptomic data from 32 species of the family and one outgroup from Serranidae (_Centropristis striata___; NCBI accession number: GCF_030273125).
+
+The phylogenetic framework of Epinephelidae was resolved using transcriptomic data from 32 species of the family and one outgroup from Serranidae (_Centropristis striata_; NCBI accession number: GCF_030273125).
 ```
 ## mkdir Sequence_alignment, 01_108OGs_AA, 02mafft, 03trimal, and 04_AA_final
 mkdir Sequence_alignment
