@@ -135,6 +135,8 @@ for i in Species ; do docker run -v $...path:/work -w /work ezlabgva/busco:v5.5.
 ## 3. Ortholog identification and sequence alignment
 ### 3.1. Ortholog identification
 Orthogroups were identified using OrthoFinder v.2.5.5, applying an all-against-all BLAST algorithm to implement reciprocal best-hit BLASTs, using DIAMOND as the sequence similarity search engine, with the normalization of transcript length.
+
+The phylogenetic framework of Epinephelidae was resolved using transcriptomic data from 32 species of the family and one outgroup from Serranidae (_Centropristis striata_; NCBI accession number: GCF_030273125).
 ```
 ## mkdir Orthofinder_33_Speceis
 mkdir Orthofinder_33_Speceis
@@ -148,8 +150,6 @@ orthofinder -f /Orthofinder_33_Speceis/ -S diamond
 
 ### 3.2. Sequence alignment
 Through ortholog identification, a total of 108 one-to-one single-copy orthologous genes (OGs) were identified and used for downstream analysis. All OGs were aligned using MAFFT v.7.453 with the L-INS-I algorithm. Subsequently, aligned OGs were trimmed using trimAl v.1.4 with the --automated1 parameter.
-
-The phylogenetic framework of Epinephelidae was resolved using transcriptomic data from 32 species of the family and one outgroup from Serranidae (_Centropristis striata_; NCBI accession number: GCF_030273125).
 ```
 ## mkdir Sequence_alignment, 01_108OGs_AA, 02mafft, 03trimal, and 04_AA_final
 mkdir Sequence_alignment
@@ -186,6 +186,22 @@ Phylogenetic trees of family Epinephelidae were reconstructed using two differen
 ### 4.1 Phylogenetic analyses using two different dataset types
 The corresponding nucleotide CDS were obtained and aligned using PAL2NAL v.14.0 against the amino acids of orthologs.
 ```
+# mkdir Single_Copy_Orthologue_Sequences
+mkdir Single_Copy_Orthologue_Sequences
+# copy the 108 Single_Copy_Orthologue to Single_Copy_Orthologue_Sequences file
+cp date/Single_Copy_Orthologue_Sequences/*fa Single_Copy_Orthologue_Sequences
+# Generate a mapping table linking ortho sequence file names to their corresponding sequence identifiers
+for i in `ls /Single_Copy_Orthologue_Sequences/*fa`; do
+grep ">" $i | while read id; do
+echo $i $id; done
+done
+
+# cat all *.refseq.cds.fa into a merge file
+cat *.refseq.cds.fa > merge.ortho.original.cds
+# Remove the suffixes from sequence identifiers and convert multi-line FASTA sequences into a single-line format
+cat merge.ortho.original.cds | seqkit replace -p "\s.+" >> merge.ortho1.cds
+sed 's/^\(>.*\)/\1\t/' merge.ortho1.cds | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > merge.ortho.cds
+
 
 ```
 
