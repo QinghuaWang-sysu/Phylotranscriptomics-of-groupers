@@ -142,7 +142,7 @@ The phylogenetic framework of Epinephelidae was resolved using transcriptomic da
 mkdir Orthofinder_33_Speceis
 # Download RefSeq of outgroup Centropristis striata (NCBI accession number: GCF_030273125)
 # cp Centropristis_striata_GCF_030273125.1_protein.faa to Orthofinder_33_Speceis file
-# Ortholog identification, total 33 species, including 32 groupers and 1 outgroup (C. striata)
+# Ortholog identification, total 33 species, including 32 groupers and 1 outgroup (_C. striata_)
 orthofinder -f /Orthofinder_33_Speceis/ -S diamond 
 
 ### Finally, '/Orthofinder_33_Speceis/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences' file obtain 108 OGs
@@ -186,6 +186,7 @@ Phylogenetic trees of family Epinephelidae were reconstructed using two differen
 ### 4.1 Phylogenetic analyses using two different dataset types
 The corresponding nucleotide CDS were obtained and aligned using PAL2NAL v.14.0 against the amino acids of orthologs.
 ```
+## For 32 Epinephelidae species
 # mkdir Single_Copy_Orthologue_Sequences
 mkdir Single_Copy_Orthologue_Sequences
 # copy the 108 Single_Copy_Orthologue to Single_Copy_Orthologue_Sequences file
@@ -195,16 +196,35 @@ for i in `ls /Single_Copy_Orthologue_Sequences/*fa`; do
 grep ">" $i | while read id; do
 echo $i $id; done
 done
-
 # cat all *.refseq.cds.fa into a merge file
 cat *.refseq.cds.fa > merge.ortho.original.cds
 # Remove the suffixes from sequence identifiers and convert multi-line FASTA sequences into a single-line format
 cat merge.ortho.original.cds | seqkit replace -p "\s.+" >> merge.ortho1.cds
 sed 's/^\(>.*\)/\1\t/' merge.ortho1.cds | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > merge.ortho.cds
-
-
+# obtaining the corresponding nucleotide CDS
+cat output_cda.tab|while read id;do
+	arr=($id);
+	file=`basename ${arr[0]}`;
+	name=${file%.*};
+	grep -A1 ${arr[1]} merge.ortho.cds >> ./Orthogroup_cds_Sequences/${name}.fa;
+done
+echo "split cds done"
 ```
-
+```
+## For outgroup
+# getting the cds of outgroup (_C. striata_: GCF_030273125)
+# Remove the suffixes from sequence identifiers and convert multi-line FASTA sequences into a single-line format (outgroup)
+cat cds_GCF_030273125.1.cds | seqkit replace -p "\s.+" >> cds_GCF_merge.ortho1.cds
+sed 's/^\(>.*\)/\1\t/' cds_GCF_merge.ortho1.cds | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > cds_GCF_merge.ortho.cds
+# obtaining the corresponding nucleotide CDS (outgroup)
+cat output_cda.tab|while read id;do
+	arr=($id);
+	file=`basename ${arr[0]}`;
+	name=${file%.*};
+	grep -A1 ${arr[1]} cds_GCF_030273125.1.cds >> ./Orthogroup_cds_Sequences/${name}.fa;
+done
+echo "split cds done"
+```
 
 
 
