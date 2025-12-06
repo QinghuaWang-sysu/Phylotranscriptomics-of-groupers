@@ -392,9 +392,9 @@ iqtree2 -s Grouper108OGs.fas -m MFP -nt 40 -bb 10000 -bnni -alrt 10000 -redo
 #### 4.2.2. Bayesian inference (BI) tree
 BI tree was inferred by MrBayes v.3.2.7 with the parameter set as follows: Four Markov Chain Monte Carlo (MCMC) chains (including three heated and one cold chains) were run independently for 10 million generations and sampled every 1,000 generations.
 ```
-
+mpirun -np 4 --cpus-per-proc 8 mb Grouper108OGs.nex -mcmcappend yes
 ```
-
+#### 4.2.3.  (MSC) tree
 
 
 
