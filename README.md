@@ -177,7 +177,7 @@ cd /Sequence_alignment/03trimal
 for i in *.trimal ; do cat $i | seqkit replace -p "\s.+" >> $i.cat ; done
 for i in *.cat ; do sed 's/^\(>.*\)/\1\t/' $i | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > $i.sed ; done
 
-#### only retain the species name for each OGs
+#### only retain the species name for each OGs in the 04fasta_AA file
 ```
 
 ## 4. Phylogenetic analyses
@@ -253,7 +253,7 @@ cd /Sequence_alignment/13trimal
 for i in *.trimal ; do cat $i | seqkit replace -p "\s.+" >> $i.cat ; done
 for i in *.cat ; do sed 's/^\(>.*\)/\1\t/' $i | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > $i.sed ; done
 
-#### only retain the species name for each OGs
+#### only retain the species name for each OGs in the 14fasta_nuc file
 ```
 
 #### 4.1.2. The average pairwise distance between species
@@ -430,9 +430,22 @@ for file in /Orthogroup_cds_Sequences/*; do
   echo $(basename "$file") >> PMLid.txt
 done
 
-###
+### Copy aligned OGs from /Sequence_alignment/14fasta_nuc file to the corresponding Single_tree file
+mkdir Single_tree
 for i in `cat PMLid.txt`; 
-do mkdir Single_tree/${i}; cp /home/wangqh/rnaseq/52Analysis_Tree/24fasta/${i}.fasta  /home/wangqh/rnaseq/52Analysis_Tree/43astral/Single_tree/${i}/ ; done
+do mkdir /Single_tree/${i}; cp /Sequence_alignment/14fasta_nuc/${i}.fasta /Single_tree/${i}/ ; done
+
+### Reconstrcting the single tree of each OGs
+for i in `cat /PMLid.txt`; 
+do cd /Single_tree/${i}; iqtree -s ${i}.fasta -m GTR+F+R5 -nt 16 -bb 10000 -bnni -redo > ${i}.log; 
+echo "ML tree for ${i} finished"; done
+
+### Copy treefiles
+mkdir singletreescopy
+for i in `cat /PMLid.txt`; 
+do cp /Single_tree/${i}/${i}.fasta.treefile /singletreescopy; 
+done
+
 
 ```
 
