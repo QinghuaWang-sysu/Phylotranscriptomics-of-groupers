@@ -227,6 +227,34 @@ done
 echo "split cds done"
 ```
 The CDS were obtained, and Sequence alignment was performed following the description in Section 3.2.
+```
+## mkdir Sequence_alignment, 11_108OGs_nuc, 12mafft, 13trimal, and 14_nuc_final
+mkdir Sequence_alignment
+mkdir Sequence_alignment/11_108OGs_nuc
+mkdir Sequence_alignment/12mafft
+mkdir Sequence_alignment/13trimal
+mkdir Sequence_alignment/14_nuc_final
+
+# cp the nuc sequence of 108 OGs to Sequence_alignment/11_108OGs_nuc file
+
+## MAFFT alignment
+cd /Sequence_alignment/11_108OGs_nuc
+export TMPDIR=/Sequence_alignment/11_108OGs_nuc
+for i in *.fa; do mafft --localpair --maxiterate 1000 $i > /Sequence_alignment/12mafft/$i ; done &
+# rename the *.fa
+rename 's/$/\.mafft/'  /Sequence_alignment/12mafft/*
+# only retain the sequences of *.fa using nuc_retain_sequence.py
+python nuc_retain_sequence.py
+
+## trimAl trimmed
+cd /Sequence_alignment/12mafft
+for i in *.mafft ; do trimal -in $i -out /Sequence_alignment/13trimal/${i}.trimal -htmlout output.html -automated1 ; done
+cd /Sequence_alignment/13trimal
+for i in *.trimal ; do cat $i | seqkit replace -p "\s.+" >> $i.cat ; done
+for i in *.cat ; do sed 's/^\(>.*\)/\1\t/' $i | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > $i.sed ; done
+
+#### only retain the species name for each OGs
+```
 
 #### 4.1.2. The average pairwise distance between species
 The average pairwise distance between species was calculated to further quantify the relationship within major clades for both nucleotide and amino acid datasets.
@@ -394,11 +422,19 @@ BI tree was inferred by MrBayes v.3.2.7 with the parameter set as follows: Four 
 ```
 mpirun -np 4 --cpus-per-proc 8 mb Grouper108OGs.nex -mcmcappend yes
 ```
-#### 4.2.3.  (MSC) tree
+#### 4.2.3. Multispecies coalescent (MSC) tree
+Species tree inference was conducted with the MSC model implemented in ASTRAL-Pro.
+```
+### Extracting the names of all files in the Orthogroup_cds_Sequences directory, and saving them to PMLid.txt
+for file in /Orthogroup_cds_Sequences/*; do
+  echo $(basename "$file") >> PMLid.txt
+done
 
+###
+for i in `cat PMLid.txt`; 
+do mkdir Single_tree/${i}; cp /home/wangqh/rnaseq/52Analysis_Tree/24fasta/${i}.fasta  /home/wangqh/rnaseq/52Analysis_Tree/43astral/Single_tree/${i}/ ; done
 
-
-
+```
 
 
 
