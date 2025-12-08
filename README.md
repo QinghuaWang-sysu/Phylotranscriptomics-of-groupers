@@ -422,7 +422,7 @@ BI tree was inferred by MrBayes v.3.2.7 with the parameter set as follows: Four 
 ```
 mpirun -np 4 --cpus-per-proc 8 mb Grouper108OGs.nex -mcmcappend yes
 ```
-#### 4.2.3. Multispecies coalescent (MSC) tree
+#### 4.2.3. Multispecies coalescent (MSC) tree and individual gene tree
 Species tree inference was conducted with the MSC model implemented in ASTRAL-Pro.
 ```
 ### Extracting the names of all files in the Orthogroup_cds_Sequences directory, and saving them to PMLid.txt
@@ -446,6 +446,22 @@ for i in `cat /PMLid.txt`;
 do cp /Single_tree/${i}/${i}.fasta.treefile /singletreescopy; 
 done
 
+### Rename .fasta.treefile
+cd /singletreescopy
+rename "s/.fasta.treefile//" *
+
+### Use the pxrr program from Phyx to re-root all tree files (root = C_striata)
+ls /singletreescopy/ > tree_id.txt
+for i in `cat /tree_id.txt` ; do /phyx/src/pxrr -t /singletreescopy/${i} -g C_striata > /reroot/${i} ; done
+
+### Use the pxcolt program from Phyx to collapse branches with low support
+for i in `cat /tree_id.txt` ; do /phyx/src/pxcolt -t /reroot/${i} -l 0.1 > /collapsed/${i} ; done
+
+### Merge all tree files
+for i in `cat /tree_id.txt`; do cat /ASTRAL-master/Astral.5.7.8/collapsed/${i} >> /ASTRAL-master/Astral.5.7.8/collapse_genetrees.tre; done
+
+### Individual gene tree
+java -jar astral.5.7.8.jar -i collapse_genetrees.tre -o output_species_tree.tre 2> running.log
 
 ```
 
