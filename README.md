@@ -477,3 +477,8 @@ java -jar astral.5.7.8.jar -i collapse_genetrees.tre -o output_species_tree.tre 
 
 
 
+
+
+
+
+
