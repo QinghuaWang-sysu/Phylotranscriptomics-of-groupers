@@ -466,7 +466,8 @@ java -jar astral.5.7.8.jar -i collapse_genetrees.tre -o output_species_tree.tre 
 ```
 
 
-
+#### 4.2.4. NJ and ME tree
+Species tree inference was conducted with the MSC model implemented in ASTRAL-Pro.
 
 
 
