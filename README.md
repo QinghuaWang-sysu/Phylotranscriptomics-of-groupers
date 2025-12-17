@@ -578,11 +578,11 @@ Generate the file sampleInputFile.txt, and modify the file path in the following
 ```
 cd Subtree
 
-for file in `ls out_subtree*`; do echo -e "[Input]\ntreefile: /phylotranscriptomics_QuIBL/Subtree/$file\nnumdistributions: 2\nlikelihoodthresh: 0.01\nnumsteps: 50\ngradascentscalar: 0.5\ntotaloutgroup: C_striata\nmultiproc: True\nmaxcores:70\n\n[Output]\nOutputPath: /home/newshare/zhangww/phylotranscriptomics_QuIBL/Analysis/$file.csv\n" > /home/newshare/zhangww/phylotranscriptomics_QuIBL/Run/run_$file;done
+for file in `ls out_subtree*`; do echo -e "[Input]\ntreefile: /phylotranscriptomics_QuIBL/Subtree/$file\nnumdistributions: 2\nlikelihoodthresh: 0.01\nnumsteps: 50\ngradascentscalar: 0.5\ntotaloutgroup: C_striata\nmultiproc: True\nmaxcores:70\n\n[Output]\nOutputPath: /phylotranscriptomics_QuIBL/Analysis/$file.csv\n" > /phylotranscriptomics_QuIBL/Run/run_$file;done
 ```
 Batch run the script.
 ```
-cd /home/newshare/zhangww/phylotranscriptomics_QuIBL/Run
+cd /phylotranscriptomics_QuIBL/Run
 
 # Construct a shell script (03_run.sh) for batch execution
 for file in `ls run_out_subtree_*`; do
