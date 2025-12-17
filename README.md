@@ -477,6 +477,39 @@ Species tree inference was conducted with the MSC model implemented in ASTRAL-Pr
 
 
 
+#### 4.3.2 QuIBL analysis
+
+```
+mkdir phylotranscriptomics_QuIBL
+mamba activate python2.7
+mamba deactivate
+
+cd /phylotranscriptomics_QuIBL
+# cat all 108 single gene tree to one file 'Gene_trees.genetrees.tree'
+# copy species tree to one file 'Species_trees.astral.tree'
+
+cd /phylotranscriptomics_QuIBL
+sed -i 's/\bQ_\b/Q/g' Gene_trees.genetrees.tree
+sed -i 's/\bQ_\b/Q/g' Species_trees.astral.tree
+grep -oP '(?<=\(|,)[A-Z]+(?=[:\)])' Species_trees.astral.tree | sort -u| sort -u > samples.txt
+```
+All three-species combinations were extracted from the species tree, and the script 01_comb_4spes.py was then run to generate the four-species combination file out_four_species_array.txt
+```
+nano 01_comb_4spes.py
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
