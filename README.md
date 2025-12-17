@@ -516,16 +516,87 @@ combs_4 = [(comb[0], comb[1], comb[2], 'C_striata') for comb in combs_3]
 with open('out_four_species_array.txt', 'w') as file:
     for comb in combs_4:
         file.write(' '.join(comb) + '\n')
-### run
+
+
+### run 01_comb_4spes.py
 python2.7 01_comb_4spes.py
 ```
 
 Extract subtrees (including branch length information) from the rooted gene tree collection according to the four-species combinations listed in out_four_species_array.txt. Run the script 02_extract_subtree_for_4spes.py to generate subtree files for different species combinations, named in the format "out_subtree_" + str(b) + ".txt", where b is a sequential natural number.
 ```
 nano 02_extract_subtree_for_4spes.py
+
+# coding=utf-8
+from ete3 import Tree
+
+# Input file containing four-species combinations
+file_path = 'out_four_species_array.txt'
+
+# Counter for output file naming
+b = 1
+
+with open(file_path, 'r') as file:
+    # Read the file line by line
+    for line in file:
+        # Split each line into taxa using spaces as separators
+        subtree_taxa = line.strip().split(' ')
+        result_array = []
+
+        # Open the Newick gene tree file and process each tree
+        with open('Gene_trees.genetrees.tree', 'r') as tree_file:
+            for tree_line in tree_file:
+                t = Tree(tree_line.strip())
+                # Prune the tree to retain only the target taxa,
+                # while preserving branch length information
+                t.prune(subtree_taxa, preserve_branch_length=True)
+                a = t.write()
+                result_array.append(a)
+
+        # Write the extracted subtrees to an output file
+        filename = "out_subtree_" + str(b) + ".txt"
+        with open(filename, 'w') as out_file:
+            for element in result_array:
+                out_file.write(element + '\n')
+
+        b += 1
+
+
+### run 02_extract_subtree_for_4spes.py
+python2.7 02_extract_subtree_for_4spes.py
+
+ls out_*.txt | wc -l
+
 ```
+Generate multiple gene tree files for four-species combinations, and process them to remove the ancestral node labels.
+```
+sed -i 's/)\([0-9]*\):/):/g' out_subtree_*
 
+mkdir Subtree Analysis Run
+mv out_subtree_* Subtree
+```
+Generate the file sampleInputFile.txt, and modify the file path in the following shell command accordingly.
+```
+cd Subtree
 
+for file in `ls out_subtree*`; do echo -e "[Input]\ntreefile: /phylotranscriptomics_QuIBL/Subtree/$file\nnumdistributions: 2\nlikelihoodthresh: 0.01\nnumsteps: 50\ngradascentscalar: 0.5\ntotaloutgroup: C_striata\nmultiproc: True\nmaxcores:70\n\n[Output]\nOutputPath: /home/newshare/zhangww/phylotranscriptomics_QuIBL/Analysis/$file.csv\n" > /home/newshare/zhangww/phylotranscriptomics_QuIBL/Run/run_$file;done
+```
+Batch run the script.
+```
+cd /home/newshare/zhangww/phylotranscriptomics_QuIBL/Run
+
+# Construct a shell script (03_run.sh) for batch execution
+for file in `ls run_out_subtree_*`; do
+    echo -e "python2.7 /phylotranscriptomics_QuIBL/QuIBL-master/QuIBL.py /phylotranscriptomics_QuIBL/Run/$file"
+done > 03_run.sh
+
+# Run the program in parallel using ParaFly
+# ParaFly can be installed via conda in both Python 2 and Python 3 environments
+cd /phylotranscriptomics_QuIBL
+
+ParaFly -c ./Run/03_run.sh -CPU 64
+
+ls ./Analysis/*.csv | wc -l
+```
 
 
 
