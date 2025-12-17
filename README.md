@@ -496,7 +496,7 @@ grep -oP '(?<=\(|,)[A-Z]+(?=[:\)])' Species_trees.astral.tree | sort -u| sort -u
 All three-species combinations were extracted from the species tree, and the script 01_comb_4spes.py was then run to generate the four-species combination file out_four_species_array.txt
 ```
 nano 01_comb_4spes.py
-```
+
 # coding=utf-8
 from itertools import combinations
 from ete3 import Tree
@@ -516,11 +516,10 @@ combs_4 = [(comb[0], comb[1], comb[2], 'C_striata') for comb in combs_3]
 with open('out_four_species_array.txt', 'w') as file:
     for comb in combs_4:
         file.write(' '.join(comb) + '\n')
-```
-```
 ### run
 python2.7 01_comb_4spes.py
 ```
+
 Extract subtrees (including branch length information) from the rooted gene tree collection according to the four-species combinations listed in out_four_species_array.txt. Run the script 02_extract_subtree_for_4spes.py to generate subtree files for different species combinations, named in the format "out_subtree_" + str(b) + ".txt", where b is a sequential natural number.
 ```
 nano 02_extract_subtree_for_4spes.py
