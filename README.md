@@ -493,6 +493,7 @@ sed -i 's/\bQ_\b/Q/g' Gene_trees.genetrees.tree
 sed -i 's/\bQ_\b/Q/g' Species_trees.astral.tree
 grep -oP '(?<=\(|,)[A-Z]+(?=[:\)])' Species_trees.astral.tree | sort -u| sort -u > samples.txt
 ```
+
 All three-species combinations were extracted from the species tree, and the script 01_comb_4spes.py was then run to generate the four-species combination file out_four_species_array.txt
 ```
 nano 01_comb_4spes.py
@@ -565,8 +566,8 @@ with open(file_path, 'r') as file:
 python2.7 02_extract_subtree_for_4spes.py
 
 ls out_*.txt | wc -l
-
 ```
+
 Generate multiple gene tree files for four-species combinations, and process them to remove the ancestral node labels.
 ```
 sed -i 's/)\([0-9]*\):/):/g' out_subtree_*
@@ -574,12 +575,14 @@ sed -i 's/)\([0-9]*\):/):/g' out_subtree_*
 mkdir Subtree Analysis Run
 mv out_subtree_* Subtree
 ```
+
 Generate the file sampleInputFile.txt, and modify the file path in the following shell command accordingly.
 ```
 cd Subtree
 
 for file in `ls out_subtree*`; do echo -e "[Input]\ntreefile: /phylotranscriptomics_QuIBL/Subtree/$file\nnumdistributions: 2\nlikelihoodthresh: 0.01\nnumsteps: 50\ngradascentscalar: 0.5\ntotaloutgroup: C_striata\nmultiproc: True\nmaxcores:70\n\n[Output]\nOutputPath: /phylotranscriptomics_QuIBL/Analysis/$file.csv\n" > /phylotranscriptomics_QuIBL/Run/run_$file;done
 ```
+
 Batch run the script.
 ```
 cd /phylotranscriptomics_QuIBL/Run
@@ -598,14 +601,263 @@ ParaFly -c ./Run/03_run.sh -CPU 64
 ls ./Analysis/*.csv | wc -l
 ```
 
+Add a header line to the merged file.
+```
+echo "triplet,outgroup,C1,C2,mixprop1,mixprop2,lambda2Dist,lambda1Dist,BIC2Dist,BIC1Dist,count" > header.csv
+cat header.csv results_quibl.txt > results_quibl_with_header.csv
+```
 
+Run summaryFileAnalysis.R.
+```
+Rscript /QuIBL-master/analysis/summaryFileAnalysis.R \
+    -i ./results_quibl_with_header.csv \
+    -o out_quibl_analysis \
+    -s -10
 
+### results
+### [1] "Number of discordant topologies with significant evidence for introgression: 272 topologies in 272 of 4960 triplets (delta BIC < -10 )"
+### [1] "Proportion of discordant trees arising via introgression: 0.05248367808828"
+### [1] "Proportion of all trees arising via introgression: 0.00602117852091239"
+```
 
+Create a processing script named process_quibl.R.
+```
+nano process_quibl.R
 
+#!/usr/bin/env Rscript
 
+suppressMessages(library("dplyr"))
+suppressMessages(library("ggplot2"))
 
+# Read input data with header
+quibl_data <- read.csv("results_quibl_with_header.csv", stringsAsFactors = FALSE)
 
+# Calculate key metrics
+processed_data <- quibl_data %>%
+  group_by(triplet) %>%
+  mutate(
+    numLoci = sum(count),  # Total number of loci for each triplet
+    BICdiff = BIC2Dist - BIC1Dist,  # Delta BIC
+    totalIntroProp = mixprop2 * (count / numLoci),  # Overall introgression proportion
+    isSig = BICdiff < -10,  # Significance flag (default threshold = -10)
+    mostCommon = count == max(count)  # Flag the most common topology
+  ) %>%
+  ungroup()
 
+# Save results with calculated metrics
+write.csv(processed_data, "results_quibl_with_metrics.csv", row.names = FALSE)
+
+# Plot histogram of introgression proportions
+intro_hist <- ggplot(processed_data, aes(x = mixprop2)) +
+  geom_histogram(
+    binwidth = 0.05, 
+    fill = "#4e79a7", 
+    color = "white",
+    alpha = 0.8
+  ) +
+  labs(
+    title = "Gene Flow Proportion Distribution",
+    subtitle = paste("Total triplets:", n_distinct(processed_data$triplet)),
+    x = "Non-ILS Proportion (mixprop2)",
+    y = "Number of Topologies"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_blank()
+  ) +
+  scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2))
+
+# Save histogram
+ggsave("topIntroProp_histogram.pdf", plot = intro_hist, width = 10, height = 7)
+
+# Output summary statistics
+cat("\n=== Gene Flow Proportion Summary ===\n")
+cat("Significant events:", sum(processed_data$isSig), "/", nrow(processed_data), "\n")
+cat("Mean proportion:", round(mean(processed_data$mixprop2, na.rm = TRUE), 3), "\n")
+cat("Median proportion:", round(median(processed_data$mixprop2, na.rm = TRUE), 3), "\n")
+
+# Significant statistics
+sig_hist <- ggplot(processed_data, aes(x = mixprop2, fill = isSig)) +
+  geom_histogram(position = "identity", alpha = 0.7, binwidth = 0.05) +
+  scale_fill_manual(values = c("#f28e2b", "#e15759"), 
+                    labels = c("Non-significant", "Significant")) +
+  labs(title = "Gene Flow Proportion by Significance",
+       x = "Non-ILS Proportion", y = "Count") +
+  theme_minimal()
+
+ggsave("topIntroProp_by_significance.pdf", plot = sig_hist, width = 10, height = 7)
+```
+
+Plot a histogram of gene flow proportions.
+Create an R script named add_metrics.R to process the data and add derived metrics.
+```
+nano add_metrics.R
+
+#!/usr/bin/env Rscript
+
+library(dplyr)
+
+# Read the merged results file
+quibl_data <- read.table("results_quibl.txt", 
+                         header = FALSE, 
+                         col.names = c("triplet", "tree", "count", "bic1", "bic2", 
+                                       "mixprop1", "mixprop2", "C1", "C2", "col10", "col11"),
+                         sep = ",")
+
+# Calculate key metrics
+processed_data <- quibl_data %>%
+  group_by(triplet) %>%
+  mutate(
+    numLoci = sum(count),  # Total number of loci for each triplet
+    BICdiff = bic2 - bic1,  # Delta BIC
+    totalIntroProp = mixprop2 * (count / numLoci),  # Total gene flow proportion
+    isSig = BICdiff < -10,  # Significance flag (using the default -10 threshold)
+    mostCommon = count == max(count)  # Flag the most frequent topology
+  ) %>%
+  ungroup()
+
+# Save the results with the newly added metrics
+write.csv(processed_data, "results_quibl_with_metrics.csv", row.names = FALSE)
+
+### Run
+chmod +x add_metrics.R
+./add_metrics.R
+```
+
+Create an R script named plot_all_triplets.R using nano
+```
+nano plot_all_triplets.R
+
+#!/usr/bin/env Rscript
+
+suppressMessages(library("ggplot2"))
+suppressMessages(library("RColorBrewer"))
+suppressMessages(library("dplyr"))
+
+# 1. Read the results file with calculated metrics
+quibl <- read.csv("results_quibl_with_metrics.csv", stringsAsFactors = FALSE)
+
+# 2. Set global parameters
+colors <- brewer.pal(8, "Paired")
+outBase <- "all_triplets"
+sigLevel <- -10  # Significance threshold (can be modified)
+
+# Common theme:
+#   - Axis titles and tick labels: font size 22
+#   - Legend title and text: font size 18
+base_theme <- theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 24),
+    axis.title.y = element_text(size = 24),
+    axis.text.x  = element_text(size = 22),
+    axis.text.y  = element_text(size = 22),
+    legend.title = element_text(size = 20),
+    legend.text  = element_text(size = 20),
+    plot.title   = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle= element_text(hjust = 0.5)
+  )
+
+# 3. Generate four publication-quality figures
+
+## Figure 1: Histogram of C values
+CvalHist <- ggplot(data = quibl, aes(x = C2)) +
+  geom_histogram(bins = 30, fill = colors[1], alpha = 0.8, color = "black") +
+  geom_vline(xintercept = 0.5, linetype = "dashed", color = "red") +
+  labs(title = "Non-ILS C Value Distribution",
+       subtitle = paste("Total triplets:", n_distinct(quibl$triplet)),
+       y = "Number of topologies",
+       x = "Non-ILS C") +
+  base_theme
+
+ggsave(CvalHist, file = paste0(outBase, "_CVal_hist.pdf"), height = 8, width = 10)
+
+## Figure 2: Histogram of introgression proportions
+introPropHist <- ggplot(data = quibl, aes(x = mixprop2)) +
+  geom_histogram(bins = 30, fill = colors[2], alpha = 0.8, color = "black") +
+  labs(title = "Topology Non-ILS Proportion Distribution",
+       y = "Number of topologies",
+       x = "Topology Non-ILS proportion") +
+  scale_x_continuous(limits = c(0, 1)) +
+  base_theme
+
+ggsave(introPropHist, file = paste0(outBase, "_topIntroProp_hist.pdf"), height = 8, width = 10)
+
+## Figure 3: Scatter plot of C value vs. introgression proportion
+CvalVsIntroProp <- ggplot(data = quibl) +
+  geom_point(aes(x = C2, y = mixprop2, 
+                 size = count / numLoci, 
+                 color = mostCommon, 
+                 shape = isSig), 
+             alpha = 0.7) +
+  labs(title = "C Value vs Topology Non-ILS Proportion",
+       y = "Topology non-ILS proportion",
+       x = "Non-ILS C") +
+  scale_size_continuous(name = "Proportion of loci", range = c(1, 8)) +
+  scale_color_manual(values = c(colors[8], colors[2]),
+                     labels = c("Minor topology", "Major topology"),
+                     name = "Topology type") +
+  scale_shape_manual(values = c(18, 19),
+                     labels = c("Non-significant", "Significant"),
+                     name = "Significance") +
+  xlim(0, 15) +
+  base_theme +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal"
+  ) +
+  guides(size = guide_legend(nrow = 1, title.position = "top"),
+         color = guide_legend(nrow = 1, title.position = "top"),
+         shape = guide_legend(nrow = 1, title.position = "top"))
+
+ggsave(CvalVsIntroProp, file = paste0(outBase, "_CValVsTopIntroProp.pdf"), 
+       height = 10, width = 15)
+
+## Figure 4: Scatter plot of C value vs. total introgression proportion
+CvalVsTotalIntroProp <- ggplot(data = quibl) +
+  geom_point(aes(x = C2, y = totalIntroProp, 
+                 size = count / numLoci, 
+                 color = mostCommon, 
+                 shape = isSig), 
+             alpha = 0.7) +
+  labs(title = "C Value vs Total Non-ILS Proportion",
+       y = "Total Non-ILS proportion",
+       x = "Non-ILS C") +
+  scale_size_continuous(name = "Proportion of loci", range = c(1, 8)) +
+  scale_color_manual(values = c(colors[8], colors[2]),
+                     labels = c("Minor topology", "Major topology"),
+                     name = "Topology type") +
+  scale_shape_manual(values = c(18, 19),
+                     labels = c("Non-significant", "Significant"),
+                     name = "Significance") +
+  xlim(0, 15) +
+  base_theme +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal"
+  ) +
+  guides(size = guide_legend(nrow = 1, title.position = "top"),
+         color = guide_legend(nrow = 1, title.position = "top"),
+         shape = guide_legend(nrow = 1, title.position = "top"))
+
+ggsave(CvalVsTotalIntroProp, file = paste0(outBase, "_CValVsTotalIntroProp.pdf"), 
+       height = 10, width = 15)
+
+# 5. Print summary statistics
+cat("\n===== Analysis Summary =====\n")
+cat("Total triplets analyzed:", n_distinct(quibl$triplet), "\n")
+cat("Total topologies:", nrow(quibl), "\n")
+cat("Significant introgression events:", sum(quibl$isSig), 
+    sprintf("(%.1f%%)", 100 * mean(quibl$isSig)), "\n")
+cat("Average non-ILS proportion:", round(mean(quibl$mixprop2, na.rm = TRUE), 3), "\n")
+cat("Median C value:", round(median(quibl$C2, na.rm = TRUE), 3), "\n\n")
+
+### Run
+chmod +x plot_all_triplets.R
+./plot_all_triplets.R
+```
 
 
 
