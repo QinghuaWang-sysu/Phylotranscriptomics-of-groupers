@@ -537,6 +537,8 @@ copy the /PAML/paml-4.10.7/dat/wag.dat ./
 copy the tmp0001.trees with codeml1.input.treefile
 ```
 ### codeml1.input.treefile
+  1
+
 ((P_maculatus, P_leopardus), (V_louti, ((((C_argus, A_rogaa), C_boenak), ((C_sexmaculata, C_miniata), C_urodeta)), ((((((E_undulosus, (E_flavocaeruleus, E_cyanopodus)), (E_maculatus, E_bleekeri)), (E_merra, E_fasciatus)), (E_quoyanus, E_trimaculatus)), ((E_akaara, (E_fasciatomaculosus, E_awoara)), E_sexfasciatus)), (E_marginatus, (E_bruneus, (((A_leucogrammicus, (E_polyphekadion, E_fuscoguttatus)), ((E_corallicola, E_coeruleopunctatus), C_altivelis)), (E_lanceolatus, E_coioides))))))'@.36')'@.42', C_striata);
 ```
 
