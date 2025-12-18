@@ -23,7 +23,7 @@ for i in Species ; do java -jar /Trimmomatic-0.39/trimmomatic-0.39.jar PE -phred
 ```
 
 ### 2.3. Transcriptome assembly
-Transcriptome assembly was accomplished using Trinity v.2.8.5 (Grabherr et al., 2011) with --CPU set to 20, --min_kmer_cov set to 2, and all other parameters set to default.
+Transcriptome assembly was accomplished using Trinity v.2.8.5 with --CPU set to 20, --min_kmer_cov set to 2, and all other parameters set to default.
 ```
 for i in Species ; do Trinity --seqType fq --max_memory 50G --left ${i}_1.paired.fq.gz --right ${i}_2.paired.fq.gz --CPU 10 --min_kmer_cov 2 --min_contig_length 200 --output trinity_out_dir_${i} ; done
 ```
