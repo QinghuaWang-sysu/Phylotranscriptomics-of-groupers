@@ -138,14 +138,14 @@ Orthogroups were identified using OrthoFinder v.2.5.5, applying an all-against-a
 
 The phylogenetic framework of Epinephelidae was resolved using transcriptomic data from 32 species of the family and one outgroup from Serranidae (_Centropristis striata_; NCBI accession number: GCF_030273125).
 ```
-## mkdir Orthofinder_33_Speceis
-mkdir Orthofinder_33_Speceis
+## mkdir Orthofinder_33_Species
+mkdir Orthofinder_33_Species
 # Download RefSeq of outgroup Centropristis striata (NCBI accession number: GCF_030273125)
-# cp Centropristis_striata_GCF_030273125.1_protein.faa to Orthofinder_33_Speceis file
+# cp Centropristis_striata_GCF_030273125.1_protein.faa to Orthofinder_33_Species file
 # Ortholog identification, total 33 species, including 32 groupers and 1 outgroup (C. striata)
-orthofinder -f /Orthofinder_33_Speceis/ -S diamond 
+orthofinder -f /Orthofinder_33_Species/ -S diamond 
 
-### Finally, '/Orthofinder_33_Speceis/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences' file obtain 108 OGs
+### Finally, '/Orthofinder_33_Species/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences' file obtain 108 OGs
 ```
 
 ### 3.2. Sequence alignment
@@ -159,7 +159,7 @@ mkdir Sequence_alignment/03trimal
 mkdir Sequence_alignment/04_AA_final
 
 # cp 108 OGs to Sequence_alignment/01_108OGs_AA file
-cp /Orthofinder_33_Speceis/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences/*.fa /Sequence_alignment/01_108OGs_AA
+cp /Orthofinder_33_Species/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences/*.fa /Sequence_alignment/01_108OGs_AA
 
 ## MAFFT alignment
 cd Sequence_alignment/01_108OGs_AA
