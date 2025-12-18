@@ -542,7 +542,7 @@ copy the /PAML/paml-4.10.7/dat/wag.dat ./ and copy the tmp0001.trees with codeml
 ```
 codeml codeml1.ctl
 
-### 5.5. copy mcmctree1.ctl with mcmctree2.ctl
+copy mcmctree1.ctl with mcmctree2.ctl
 ```
 ### mcmctree2.ctl
           seed = -2
@@ -579,9 +579,15 @@ codeml codeml1.ctl
 
 *** Note: Make your window wider (100 columns) before running the program.
 ```
+The final treefile was visualized using FigTree v.1.4.4.
 
+## 6. Ancestral area reconstruction
+Ancestral area reconstruction and biogeographic inference were performed on the time tree excluding the outgroup using the R package BioGeoBEARS.
+Given that E. marginatus is the only Atlantic species represented in the samples of this study, its inclusion could potentially bias biogeographic inference.
+Finally, ancestral area reconstruction was performed with BioGeoBEARS using a nucleotide dataset from 136 OGs of 31 Epinephelidae species excluding the outgroup and E. marginatus. 
 
-
+The biogeographic distribution file was prepared based on Supplementary Table S4.
+The final PAML treefile was transfered to PAMLtreefile136OGs.new
 
 
 
