@@ -472,8 +472,7 @@ Species tree inference was conducted with the MSC model implemented in ASTRAL-Pr
 
 ## 5. Divergence time estimation 
 Divergence time estimation was implemented using MCMCtree program in PAML v.4.10.7.
-### 5.1. mcmctree1.ctl
-build Sequence108OGs.tree
+### 5.1. build Sequence108OGs.tree
 ```
 ### Sequence108OGs.tree
  33  1
@@ -481,7 +480,7 @@ build Sequence108OGs.tree
 (C_striata,((P_maculatus,P_leopardus),(V_louti,((((C_argus,A_rogaa),C_boenak),((C_sexmaculata,C_miniata),C_urodeta)),((((((E_undulosus,(E_flavocaeruleus,E_cyanopodus)),(E_maculatus,E_bleekeri)),(E_merra,E_fasciatus)),(E_quoyanus,E_trimaculatus)),((E_akaara,(E_fasciatomaculosus,E_awoara)),E_sexfasciatus)),(E_marginatus,(E_bruneus,(((A_leucogrammicus,(E_polyphekadion,E_fuscoguttatus)),((E_corallicola,E_coeruleopunctatus),C_altivelis)),(E_lanceolatus,E_coioides))))'>0.13'))'>0.267<0.547')'>0.223<0.623'));
 ```
 
-build mcmctree1.ctl file
+### 5.2. build mcmctree1.ctl file
 ```
 ### mcmctree1.ctl
           seed = -2
@@ -519,7 +518,7 @@ build mcmctree1.ctl file
 *** Note: Make your window wider (100 columns) before running the program.
 ```
 
-copy the tmp0001.ctl with codeml1.ctl, and revise the parameter
+### 5.3. copy the tmp0001.ctl with codeml1.ctl, and revise the parameter
 ```
 ### codeml1.ctl
 seqfile = tmp0001.txt
@@ -533,18 +532,18 @@ method = 1
 clock = 1
 ```
 
-copy the /PAML/paml-4.10.7/dat/wag.dat ./
-copy the tmp0001.trees with codeml1.input.treefile
+### 5.4. copy the /PAML/paml-4.10.7/dat/wag.dat ./ and copy the tmp0001.trees with codeml1.input.treefile
 ```
 ### codeml1.input.treefile
   1
 
 ((P_maculatus, P_leopardus), (V_louti, ((((C_argus, A_rogaa), C_boenak), ((C_sexmaculata, C_miniata), C_urodeta)), ((((((E_undulosus, (E_flavocaeruleus, E_cyanopodus)), (E_maculatus, E_bleekeri)), (E_merra, E_fasciatus)), (E_quoyanus, E_trimaculatus)), ((E_akaara, (E_fasciatomaculosus, E_awoara)), E_sexfasciatus)), (E_marginatus, (E_bruneus, (((A_leucogrammicus, (E_polyphekadion, E_fuscoguttatus)), ((E_corallicola, E_coeruleopunctatus), C_altivelis)), (E_lanceolatus, E_coioides))))))'@.36')'@.42', C_striata);
 ```
-
 codeml codeml1.ctl
-copy mcmctree1.ctl with mcmctree2.ctl
+
+### 5.5. copy mcmctree1.ctl with mcmctree2.ctl
 ```
+### mcmctree2.ctl
           seed = -2
        seqfile = Sequence108OGs.phy
       treefile = Sequence108OGs.tree
