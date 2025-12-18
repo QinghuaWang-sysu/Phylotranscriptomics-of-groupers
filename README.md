@@ -470,13 +470,105 @@ java -jar astral.5.7.8.jar -i collapse_genetrees.tre -o output_species_tree.tre 
 Species tree inference was conducted with the MSC model implemented in ASTRAL-Pro.
 
 
+## 5. Divergence time estimation 
+Divergence time estimation was implemented using MCMCtree program in PAML v.4.10.7.
+### 5.1. mcmctree1.ctl
+build mcmctree1.ctl file
+```
+### mcmctree1.ctl
+          seed = -2
+       seqfile = Sequence108OGs.phy
+      treefile = Sequence108OGs.tree
+      mcmcfile = Sequence108OGs.txt
+       outfile = Sequence108OGs.txt
 
+         ndata = 1
+       seqtype = 0    * 0: nucleotides; 1:codons; 2:AAs
+       usedata = 3    * 0: no data; 1:seq like; 2:normal approximation; 3:out.BV (in.BV)
+         clock = 3    * 1: global clock; 2: independent rates; 3: correlated rates
+       RootAge = '<0.65'  * safe constraint on root age, used if no fossil for root.
 
+         model = 0    * 0:JC69, 1:K80, 2:F81, 3:F84, 4:HKY85
+         alpha = 0    * alpha for gamma rates at sites
+         ncatG = 5    * No. categories in discrete gamma
 
+     cleandata = 0    * remove sites with ambiguity data (1:yes, 0:no)?
 
+       BDparas = 1 1 0  * birth, death, sampling
+   kappa_gamma = 6 2      * gamma prior for kappa
+   alpha_gamma = 1 1      * gamma prior for alpha
 
+   rgene_gamma = 1 2   * gammaDir prior for rate for genes
+  sigma2_gamma = 1 10   * gammaDir prior for sigma^2     (for clock=2 or 3)
 
+      finetune = 1: 0.1  0.1  0.1  0.01 .5 * auto (0 or 1): times, musigma2, rates, mixing, paras, FossilErr
 
+         print = 1   * 0: no mcmc sample; 1: everything except branch rates 2: everything
+        burnin = 2000000
+      sampfreq = 100
+       nsample = 10000000
+
+*** Note: Make your window wider (100 columns) before running the program.
+```
+
+copy the tmp0001.ctl with codeml1.ctl, and revise the parameter
+```
+### codeml1.ctl
+seqfile = tmp0001.txt
+treefile = codeml1.input.treefile
+outfile = tmp0002.out
+noisy = 3
+model = 0
+Small_Diff = 0.1e-6
+getSE = 0
+method = 1
+clock = 1
+```
+
+copy the /PAML/paml-4.10.7/dat/wag.dat ./
+copy the tmp0001.trees with codeml1.input.treefile
+```
+### codeml1.input.treefile
+((P_maculatus, P_leopardus), (V_louti, ((((C_argus, A_rogaa), C_boenak), ((C_sexmaculata, C_miniata), C_urodeta)), ((((((E_undulosus, (E_flavocaeruleus, E_cyanopodus)), (E_maculatus, E_bleekeri)), (E_merra, E_fasciatus)), (E_quoyanus, E_trimaculatus)), ((E_akaara, (E_fasciatomaculosus, E_awoara)), E_sexfasciatus)), (E_marginatus, (E_bruneus, (((A_leucogrammicus, (E_polyphekadion, E_fuscoguttatus)), ((E_corallicola, E_coeruleopunctatus), C_altivelis)), (E_lanceolatus, E_coioides))))))'@.36')'@.42', C_striata);
+```
+
+codeml codeml1.ctl
+copy mcmctree1.ctl with mcmctree2.ctl
+```
+          seed = -2
+       seqfile = Sequence108OGs.phy
+      treefile = Sequence108OGs.tree
+      mcmcfile = Sequence108OGs.txt
+       outfile = Sequence108OGs.txt
+
+         ndata = 1
+       seqtype = 0    * 0: nucleotides; 1:codons; 2:AAs
+       usedata = 2    * 0: no data; 1:seq like; 2:normal approximation; 3:out.BV (in.BV)
+         clock = 3    * 1: global clock; 2: independent rates; 3: correlated rates
+       RootAge = '<0.65'  * safe constraint on root age, used if no fossil for root.
+
+         model = 0    * 0:JC69, 1:K80, 2:F81, 3:F84, 4:HKY85
+         alpha = 0    * alpha for gamma rates at sites
+         ncatG = 5    * No. categories in discrete gamma
+
+     cleandata = 0    * remove sites with ambiguity data (1:yes, 0:no)?
+
+       BDparas = 1 1 0  * birth, death, sampling
+   kappa_gamma = 6 2      * gamma prior for kappa
+   alpha_gamma = 1 1      * gamma prior for alpha
+
+   rgene_gamma = 1 14.785025725945   * gammaDir prior for rate for genes
+  sigma2_gamma = 1 10   * gammaDir prior for sigma^2     (for clock=2 or 3)
+
+      finetune = 1: 0.1  0.1  0.1  0.01 .5 * auto (0 or 1): times, musigma2, rates, mixing, paras, FossilErr
+
+         print = 1   * 0: no mcmc sample; 1: everything except branch rates 2: everything
+        burnin = 2000000
+      sampfreq = 100
+       nsample = 10000000
+
+*** Note: Make your window wider (100 columns) before running the program.
+```
 
 
 
