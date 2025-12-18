@@ -603,8 +603,133 @@ Ancestral area reconstruction and biogeographic inference were performed on the 
 Given that E. marginatus is the only Atlantic species represented in the samples of this study, its inclusion could potentially bias biogeographic inference.
 Finally, ancestral area reconstruction was performed with BioGeoBEARS using a nucleotide dataset from 136 OGs of 31 Epinephelidae species excluding the outgroup and E. marginatus. 
 
-The biogeographic distribution file was prepared based on Supplementary Table S4.
+The biogeographic distribution file was prepared based on Supplementary Table S4 (PAMLtreefile136OGs.phy)
 The final PAML treefile was transfered to PAMLtreefile136OGs.new
 
+All codes used for ancestral area reconstruction were sourced from the official BioGeoBEARS GitHub repository (https://github.com/nmatzke/BioGeoBEARS).
+Here, showing the BAYAREALIKE model in R
+```
+# install.packages("magic")
+# install.packages("geometry")
+# install.packages("vegan")
+# install.packages("permute")
+# install.packages("optimx")
+# install.packages("GenSA")
+# install.packages("FD")
+# install.packages("snow")
+# install.packages("parallel")
+# install.packages("rexpokit")
+# install.packages("cladoRcpp")
+# install.packages("devtools")
+
+library(optimx)
+library(GenSA)
+library(FD)
+library(snow)
+library(parallel)
+library(rexpokit)
+library(cladoRcpp)
+
+library(devtools)
+# devtools::install_github(repo="nmatzke/BioGeoBEARS")
+library(BioGeoBEARS)
+
+calc_loglike_sp = compiler::cmpfun(calc_loglike_sp_prebyte)
+calc_independent_likelihoods_on_each_branch = compiler::cmpfun(calc_independent_likelihoods_on_each_branch_prebyte)
+getwd()
+
+# Step 1. Prepare the tree file
+# Tree file: the divergence tree obtained from PAML is used
+trfn = "PAMLtreefile136OGs.new"  # Input tree file (must be strictly bifurcating; branch lengths must be non-negative; extremely short branches may cause issues; species names must not contain spaces)
+moref(trfn)  # Display detailed information of the tree
+pdffn = "treeDD.pdf"
+pdf(file = pdffn, width = 15, height = 20)  # Export the tree as a PDF file
+tr = read.tree(trfn)
+tr
+plot(tr, cex = 0.5)
+title("treeDD.pdf")
+axisPhylo()  # Plot the time scale
+mtext("Millions of years ago (Ma)", side = 1, line = 2)
+dev.off()
+cmdstr = paste0("open", pdffn)
+system(cmdstr)
 
 
+# Step 2. Prepare the geographic distribution file
+# Geographic information
+geogfn = "PAMLtreefile136OGs.phy"  # Input geographic distribution file
+moref(geogfn)  # Show geographic data
+tipranges = getranges_from_LagrangePHYLIP(lgdata_fn = geogfn)  # Note: the delimiter between numeric and letter-coded areas must be a TAB, not a space
+tipranges
+max(rowSums(dfnums_to_numeric(tipranges@df)))  # Maximum number of areas occupied simultaneously by any taxon
+max_range_size = 5  # Set the maximum ancestral range size (must not exceed the total number of defined areas)
+numstates_from_numareas(numareas = 4, maxareas = 4, include_null_range = TRUE)  # See official documentation for alternative range-combination settings
+
+
+#BAYAREALIKE
+
+BioGeoBEARS_run_object = define_BioGeoBEARS_run()
+BioGeoBEARS_run_object$trfn = trfn
+BioGeoBEARS_run_object$geogfn = geogfn
+BioGeoBEARS_run_object$max_range_size = max_range_size
+BioGeoBEARS_run_object$min_branchlength = 0.000001
+BioGeoBEARS_run_object$include_null_range = TRUE
+
+BioGeoBEARS_run_object$on_NaN_error = -1e50
+BioGeoBEARS_run_object$speedup = TRUE
+BioGeoBEARS_run_object$use_optimx = TRUE
+BioGeoBEARS_run_object$num_cores_to_use = 1
+BioGeoBEARS_run_object$force_sparse = FALSE
+
+BioGeoBEARS_run_object = readfiles_BioGeoBEARS_run(BioGeoBEARS_run_object)
+BioGeoBEARS_run_object$return_condlikes_table = TRUE
+BioGeoBEARS_run_object$calc_TTL_loglike_from_condlikes_table = TRUE
+BioGeoBEARS_run_object$calc_ancprobs = TRUE
+
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["s","type"] = "fixed"
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["s","init"] = 0.0
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["s","est"] = 0.0
+
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["v","type"] = "fixed"
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["v","init"] = 0.0
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["v","est"] = 0.0
+
+# BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["j","type"] = "free"
+# BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["j","init"] = 0.01
+# BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["j","est"] = 0.01
+
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["ysv","type"] = "1-j"
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["ys","type"] = "ysv*1/1"
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["y","type"] = "1-j"
+
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["mx01y","type"] = "fixed"
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["mx01y","init"] = 0.9999
+BioGeoBEARS_run_object$BioGeoBEARS_model_object@params_table["mx01y","est"] = 0.9999
+
+check_BioGeoBEARS_run(BioGeoBEARS_run_object)
+
+resfn = "Psychotria_BAYAREALIKE_M0_unconstrained_v1.Rdata"
+res = bears_optim_run(BioGeoBEARS_run_object)
+save(res, file=resfn)
+resBAYAREALIKE = res
+
+#load(resfn)
+#resBAYAREALIKE = res
+
+# Plot the result figures
+
+# Only the visualization of the BAYAREALIKE results is shown here
+pdffn = "Psychotria_M0_unconstrained_v1.pdf"
+pdf(pdffn, width = 6, height = 6)
+
+analysis_titletxt = "BioGeoBEARS BAYAREALIKE on Psychotria M0_unconstrained"
+results_object = resBAYAREALIKE
+scriptdir = np(system.file("extdata/a_scripts", package = "BioGeoBEARS"))  # Adjust plot margins according to the tree
+
+res2 = plot_BioGeoBEARS_results(results_object, analysis_titletxt, addl_params=list("j"), plotwhat="text", label.offset=0.25, tipcex=0.3, statecex=0.3, splitcex=0.2, titlecex=0.4, plotsplits=TRUE, cornercoords_loc=scriptdir, include_null_range=TRUE, tr=tr, tipranges=tipranges)
+plot_BioGeoBEARS_results(results_object, analysis_titletxt, addl_params=list("j"), plotwhat="pie", label.offset=0.25, tipcex=0.3, statecex=0.3, splitcex=0.2, titlecex=0.4, plotsplits=TRUE, cornercoords_loc=scriptdir, include_null_range=TRUE, tr=tr, tipranges=tipranges)
+
+dev.off()
+cmdstr = paste("open ", pdffn, sep="")
+system(cmdstr)
+```
