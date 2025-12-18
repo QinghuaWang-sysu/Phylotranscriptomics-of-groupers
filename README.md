@@ -162,7 +162,7 @@ mkdir Sequence_alignment/04_AA_final
 cp /Orthofinder_33_Speceis/OrthoFinder/Results_date/Single_Copy_Orthologue_Sequences/*.fa /Sequence_alignment/01_108OGs_AA
 
 ## MAFFT alignment
-cd /Sequence_alignment/01_108OGs_AA
+cd Sequence_alignment/01_108OGs_AA
 export TMPDIR=/Sequence_alignment/01_108OGs_AA
 for i in *.fa; do mafft --localpair --maxiterate 1000 $i > /Sequence_alignment/02mafft/$i ; done &
 # rename the *.fa
@@ -171,9 +171,9 @@ rename 's/$/\.mafft/'  /Sequence_alignment/02mafft/*
 python AA_retain_sequence.py
 
 ## trimAl trimmed
-cd /Sequence_alignment/02mafft
+cd Sequence_alignment/02mafft
 for i in *.mafft ; do trimal -in $i -out /Sequence_alignment/03trimal/${i}.trimal -htmlout output.html -automated1 ; done
-cd /Sequence_alignment/03trimal
+cd Sequence_alignment/03trimal
 for i in *.trimal ; do cat $i | seqkit replace -p "\s.+" >> $i.cat ; done
 for i in *.cat ; do sed 's/^\(>.*\)/\1\t/' $i | tr '\n' ' ' | sed -e 's/ $/\n/' -e 's/ >/\n>/g' -e 's/ //g' -e 's/\t/\n/g' > $i.sed ; done
 
@@ -465,8 +465,8 @@ java -jar astral.5.7.8.jar -i collapse_genetrees.tre -o output_species_tree.tre 
 
 ```
 
-#### 4.2.4. NJ and ME tree
-Species tree inference was conducted with the MSC model implemented in ASTRAL-Pro.
+#### 4.2.4. Neighbour-joining (NJ) and Minimum-evolution (ME) tree
+NJ and ME analyses were implemented using MEGA v.11.0 with 10,000 pseudo replicates.
 
 ### 4.3. Phylogenetic analyses using two gene integration strategies
 The files of the concatenated dataset were obtained with the software PhyloSuite v.1.2.3.
@@ -483,7 +483,7 @@ java -jar phyparts/target/phyparts-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
 The pie chart of each internal branch (node) was summarized and visualized using the phypartspiecharts.py script (https://github.com/mossmatters/phyloscripts/tree/master/phypartspiecharts). 
 ```
 conda activate py37
-cd /phyparts/ASTRALtest
+cd phyparts/ASTRALtest
 python phypartspiecharts.py out.concon.tre out 108
 ```
 
