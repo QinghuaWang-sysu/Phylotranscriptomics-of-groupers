@@ -473,6 +473,14 @@ Species tree inference was conducted with the MSC model implemented in ASTRAL-Pr
 ## 5. Divergence time estimation 
 Divergence time estimation was implemented using MCMCtree program in PAML v.4.10.7.
 ### 5.1. mcmctree1.ctl
+build Sequence108OGs.tree
+```
+### Sequence108OGs.tree
+ 33  1
+
+(C_striata,((P_maculatus,P_leopardus),(V_louti,((((C_argus,A_rogaa),C_boenak),((C_sexmaculata,C_miniata),C_urodeta)),((((((E_undulosus,(E_flavocaeruleus,E_cyanopodus)),(E_maculatus,E_bleekeri)),(E_merra,E_fasciatus)),(E_quoyanus,E_trimaculatus)),((E_akaara,(E_fasciatomaculosus,E_awoara)),E_sexfasciatus)),(E_marginatus,(E_bruneus,(((A_leucogrammicus,(E_polyphekadion,E_fuscoguttatus)),((E_corallicola,E_coeruleopunctatus),C_altivelis)),(E_lanceolatus,E_coioides))))'>0.13'))'>0.267<0.547')'>0.223<0.623'));
+```
+
 build mcmctree1.ctl file
 ```
 ### mcmctree1.ctl
@@ -557,7 +565,7 @@ copy mcmctree1.ctl with mcmctree2.ctl
    kappa_gamma = 6 2      * gamma prior for kappa
    alpha_gamma = 1 1      * gamma prior for alpha
 
-   rgene_gamma = 1 14.785025725945   * gammaDir prior for rate for genes
+   rgene_gamma = 1 14   * gammaDir prior for rate for genes
   sigma2_gamma = 1 10   * gammaDir prior for sigma^2     (for clock=2 or 3)
 
       finetune = 1: 0.1  0.1  0.1  0.01 .5 * auto (0 or 1): times, musigma2, rates, mixing, paras, FossilErr
