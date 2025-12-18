@@ -465,10 +465,27 @@ java -jar astral.5.7.8.jar -i collapse_genetrees.tre -o output_species_tree.tre 
 
 ```
 
-
 #### 4.2.4. NJ and ME tree
 Species tree inference was conducted with the MSC model implemented in ASTRAL-Pro.
 
+### 4.3. Phylogenetic analyses using two gene integration strategies
+The files of the concatenated dataset were obtained with the software PhyloSuite v.1.2.3.
+
+The concordance and conflict among gene trees across datasets were evaluated by mapping individual gene trees onto the coalescent-based tree using PhyParts.
+```
+java -jar phyparts/target/phyparts-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+-a 1 -v \
+-d ASTRAL-master/Astral.5.7.8/collapsed \
+-m species.tre \
+-o phyparts/ASTRALtest/out
+```
+
+The pie chart of each internal branch (node) was summarized and visualized using the phypartspiecharts.py script (https://github.com/mossmatters/phyloscripts/tree/master/phypartspiecharts). 
+```
+conda activate py37
+cd /phyparts/ASTRALtest
+python phypartspiecharts.py out.concon.tre out 108
+```
 
 ## 5. Divergence time estimation 
 Divergence time estimation was implemented using MCMCtree program in PAML v.4.10.7.
