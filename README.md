@@ -425,6 +425,25 @@ mpirun -np 4 --cpus-per-proc 8 mb Grouper108OGs.nex -mcmcappend yes
 #### 4.2.3. Multispecies coalescent (MSC) tree and individual gene tree
 Species tree inference was conducted with the MSC model implemented in ASTRAL-Pro.
 ```
+# download ASTRAL-Pro
+wget https://github.com/chaoszhang/A-pro/archive/refs/heads/master.zip
+unzip master.zip
+bash A-pro-master/ASTRAL-MP/make.sh
+
+# Generate a single file that will contain all trees
+cat *.treefile > all_gene_trees.tree
+
+# run astral-pro
+cd /A-pro-master/ASTRAL-MP
+java -jar -D"java.library.path=lib" astral.1.1.6.jar -i all_gene_trees.tree -o all_gene_trees
+
+# branch support
+cd /A-pro-master/ASTRAL-MP
+java -Djava.library.path=./lib/ -jar astral.1.1.6.jar -i all_gene_trees.tree -q all_gene_trees -o all_gene_trees_bs
+```
+
+Gene trees inferred from OGs were used as input for subsequent species tree estimation under the mixture model-based ML method in IQ-TREE.
+```
 ### Extracting the names of all files in the Orthogroup_cds_Sequences directory, and saving them to PMLid.txt
 for file in /Orthogroup_cds_Sequences/*; do
   echo $(basename "$file") >> PMLid.txt
@@ -460,9 +479,70 @@ for i in `cat /tree_id.txt` ; do /phyx/src/pxcolt -t /reroot/${i} -l 0.1 > /coll
 ### Merge all tree files
 for i in `cat /tree_id.txt`; do cat /ASTRAL-master/Astral.5.7.8/collapsed/${i} >> /ASTRAL-master/Astral.5.7.8/collapse_genetrees.tre; done
 
-### Individual gene tree
+### species tree
 java -jar astral.5.7.8.jar -i collapse_genetrees.tre -o output_species_tree.tre 2> running.log
+```
 
+The individual gene trees were inferred using DensiTree v.3.1.0 to visualize the gene tree discrepancy.
+```
+conda install -c bioconda newick_utils
+conda activate newick_env
+for file in *.treefile ; do nw_reroot $file -l "C_striata" | nw_order - > $file.rooted.order
+echo "***********" $file rooted "*************"
+done
+```
+```
+#!/usr/bin/env Rscript
+# install.packages("phytools")
+# install.packages("scatterplot3d")
+library(phytools)
+
+# install.packages("phangorn")
+library(phangorn)
+
+# install.packages("ape")
+library(ape)
+
+# install.packages("picante")
+library(picante)
+
+# Modifying the working directory is critical
+# Load all tree files
+setwd("D:/R_files/treefile")
+myTrees <- list.files(pattern = "*order")
+
+# Loop through all tree files
+for (t in myTrees) {
+  # Read the tree
+  tree <- read.tree(t)
+  
+  # Convert the tree to an ultrametric tree
+  ult.tree <- chronos(tree, lambda = 0)
+  
+  # Convert the tree to a strictly dichotomous (fully bifurcating) tree
+  tree.dic <- multi2di(ult.tree, random = TRUE)
+  
+  # Save the ultrametric tree as a PDF file
+  pdf(paste0(t, "_ultra_dic.pdf"), width = 8, height = 11)
+  plot <- plotTree(tree.dic)
+  dev.off()
+  
+  # Save the new ultrametric tree to a file
+  write.tree(
+    tree.dic,
+    file = paste0(t, ".ultra.dic.tree"),
+    append = FALSE,
+    digits = 10,
+    tree.names = FALSE
+  )
+}
+```
+```
+# Copy the *.order.ultra.dic.tree files to Linux
+cat *.rooted.order.ultra.dic.tree > all_rooted.order.ultra.dic.tree
+
+# Visualize the trees using DensiTree
+java -jar DensiTree.v3.1.0.jar all_rooted.order.ultra.dic.tree
 ```
 
 #### 4.2.4. Neighbour-joining (NJ) and Minimum-evolution (ME) tree
